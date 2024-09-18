@@ -1,16 +1,21 @@
 import cv2
 import time 
+import openai
+import os
 
 # OpenCV face_recognition_model
 model_url = "/home/proken/workspace/proken_robot/assets/haarcascade_frontalface_default.xml"
 face_cascade = cv2.CascadeClassifier(model_url)
 
+video_url = "http://172.20.10.4:8080/video"
+audio_url = "http://172.20.10.3:8080/audio.wav"
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
 if face_cascade.empty():
     print("Error: Could not load Haar Cascade file.")
 
-url = "http://172.20.10.4:8080/video"
-
-cap = cv2.VideoCapture(url)
+cap = cv2.VideoCapture(video_url)
 
 ret, frame = cap.read()
 
