@@ -4,7 +4,7 @@ import time
 import serial
 
 # シリアル通信の設定
-ser = serial.Serial('/dev/ttyACM0', 9600)
+# ser = serial.Serial('/dev/ttyACM0', 9600)
 time.sleep(2)
 
 # OpenCVが提供する顔検出モデル
@@ -19,9 +19,9 @@ url = "http://172.20.10.3:8080/video"
 cap = cv2.VideoCapture(url)
 
 ret, frame = cap.read()
+frame = cv2.resize(frame, (640, 480))
 
 # 追跡対象の設定
-target_face = None
 tracking = False
 
 # カメラ画面の中心                                                          
@@ -36,6 +36,9 @@ last_faces = []
 last_detection_time = 0
 detection_interval = 2
 
+# トラッカーモデルの作成
+tracker = cv2.TrackerKCF_create()
+
 def detect_face_center(x,width,y,height):
     center_x = x + width // 2
     center_y = y + height // 2
@@ -48,10 +51,11 @@ def face_distance(face_center_x, face_center_y, center_x, center_y):
 
 while True:
     ret, frame = cap.read()
+    frame = cv2.resize(frame, (640, 480))
 
-    if not ret:
+    if not ret or frame is None:
         print('not read camera')
-        break
+        continue
 
     current_time = time.time()
 
@@ -79,33 +83,42 @@ while True:
                     selected_face = (x, y, w, h)
             
         if selected_face is not None:
-            target_face = selected_face
             tracking = True
             (x, y, w, h) = selected_face
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-            cv2.putText(frame, f"({str(face_distance_x)}, {str(face_distance_y)})", (50,250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+            # トラッカーを設定
+            tracker.init(frame, (x, y, w, h))
             print("追跡対象を設定しました")
     
-    # 追跡対象が設定されれば
-    if tracking:
-        x, y, w, h = target_face
-        face_center = detect_face_center(x, w, y, h)
-        dx = face_center[0] - cap_center_x
-        dy = face_center[1] - cap_center_y
+    # 追跡開始
+    else:
+        success, bbox = tracker.update(frame)
+        if success:
+            x, y, w, h = [int(v) for v in bbox]
+            face_center = detect_face_center(x, w, y, h)
+            dx = face_center[0] - cap_center_x
+            dy = face_center[1] - cap_center_y
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            cv2.putText(frame, "face setting...", (50,250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+
+            # カメラの中心に顔が来たら終了
+            if (abs(dx) < 100 and abs(dy) < 100):
+                print("追跡を終了します。")
+                tracking = False
+                tracker = cv2.TrackerKCF_create()
+        
+        else:
+            print("対象を見失いました")
+            tracking = False
+            tracker = cv2.TrackerKCF_create()
 
         # arduinoにdx, dyの情報を送る
-        data = f"{dx}, {dy}\n"
-        ser.write(data.encode('utf-8'))
-        print(f"Sending dx: {dx}, dy: {dy}")   
+        # data = f"{dx}, {dy}\n"
+        # ser.write(data.encode('utf-8'))
+        print(f"Sending dx: {dx}, dy: {dy}")
 
-        # カメラの中心に顔が来たら終了
-        if (abs(dx) < 10 and abs(dy) < 10):
-            print("追跡を終了します。")
-            tracking = False
     
     # タイヤの動作を待つ
-    time.sleep(1)
-
+    # time.sleep(1)
 
     cv2.imshow("Face Detection", frame)
 
