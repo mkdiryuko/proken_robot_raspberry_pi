@@ -2,6 +2,7 @@ import requests
 import wave
 from openai import OpenAI
 import os
+from jtalk import jtalk
 
 # Whisper APIキーの設定
 OpenAI.api_key = 'OPENAI_API_KEY'
@@ -24,10 +25,6 @@ def audio_convert_text(audio_path):
                 )
             print("テキスト変換結果：", transcription.text)
 
-            # 一時ファイルを削除
-            if os.path.exists(audio_file):
-                os.remove(audio_file)
-
     except KeyboardInterrupt:
         print("リアルタイム変換を終了します")
     except Exception as e:
@@ -35,8 +32,8 @@ def audio_convert_text(audio_path):
     
     return transcription.text
 
-def create_conversation(text):
-    prompt = "以下の条件のもとで、会話をしてください。\n条件1:日本語で回答する\n条件2:100文字以内で回答する\n条件3:フレンドリーに"
+def create_conversation_text(text):
+    prompt = "以下の条件のもとで、会話をしてください。\n条件1:日本語で回答する\n条件2:100文字以内で回答する\n条件3:1人称はボク\n条件4:語尾に「です」「ます」を使わないでください\n条件5:フレンドリーに"
     response = client.chat.completions.create(
         model = "gpt-4-turbo",
         messages = [
@@ -51,5 +48,6 @@ def create_conversation(text):
     return res_text
 
 input_text = audio_convert_text(audio_file)
-create_conversation(input_text)
+res_text = create_conversation_text(input_text)
+jtalk(str(res_text))
 
