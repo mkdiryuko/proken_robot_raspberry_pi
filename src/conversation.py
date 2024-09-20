@@ -1,14 +1,28 @@
-import requests
-import wave
 from openai import OpenAI
 import os
-from jtalk import jtalk
+import subprocess
 
 # Whisper APIキーの設定
 OpenAI.api_key = 'OPENAI_API_KEY'
 client = OpenAI()
 
-audio_file = "/home/proken/workspace/proken_robot/src/output.wav"
+current_dir = os.path.dirname(os.path.abspath(__file__))
+JTALK_FILEPATH = os.path.join(current_dir,"..","audio","jtalk_mei.wav")
+
+# 音声合成ソフトjtalk
+def jtalk_mei(t):
+    open_jtalk=['open_jtalk']
+    mech=['-x','/var/lib/mecab/dic/open-jtalk/naist-jdic']
+    htsvoice=['-m','/usr/share/hts-voice/mei/mei_normal.htsvoice']
+    speed=['-r','0.8']
+    outwav=['-ow',JTALK_FILEPATH]
+    cmd=open_jtalk+mech+htsvoice+speed+outwav
+    c = subprocess.Popen(cmd,stdin=subprocess.PIPE)
+    c.stdin.write(t.encode())
+    c.stdin.close()
+    c.wait()
+    aplay = ['aplay','-q',JTALK_FILEPATH]
+    wr = subprocess.run(aplay)
 
 def audio_convert_text(audio_path):
     print("音声をテキストに変換中..")
@@ -46,8 +60,3 @@ def create_conversation_text(text):
     print(res_text)
 
     return res_text
-
-input_text = audio_convert_text(audio_file)
-res_text = create_conversation_text(input_text)
-jtalk(str(res_text))
-
