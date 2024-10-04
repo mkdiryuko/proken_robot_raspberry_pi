@@ -1,14 +1,14 @@
 import cv2
 import numpy as np
 import time 
-import serial
+import os
 
-# シリアル通信の設定
-# ser = serial.Serial('/dev/ttyACM0', 9600)
+from src.motor_control import motor_run
+
 time.sleep(2)
 
-# OpenCVが提供する顔検出モデル
-model_url = "/home/proken/workspace/proken_robot/assets/haarcascade_frontalface_default.xml"
+current_dir = os.path.dirname(os.path.abspath(__file__))
+model_url = os.path.join(current_dir, "assets/haarcascade_frontalface_default.xml") # OpenCVが提供する顔検出モデル
 face_cascade = cv2.CascadeClassifier(model_url)
 
 if face_cascade.empty():
@@ -99,26 +99,21 @@ while True:
             dy = face_center[1] - cap_center_y
             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
             cv2.putText(frame, "face setting...", (50,250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+            cv2.putText(frame, f"({dx}, {dy})", (100, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
 
             # カメラの中心に顔が来たら終了
             if (abs(dx) < 100 and abs(dy) < 100):
                 print("追跡を終了します。")
                 tracking = False
                 tracker = cv2.TrackerKCF_create()
+            else: #　タイヤのモーター制御
+                print("追跡中...")
+                motor_run(dx, dy, speed=50)
         
         else:
             print("対象を見失いました")
             tracking = False
             tracker = cv2.TrackerKCF_create()
-
-        # arduinoにdx, dyの情報を送る
-        # data = f"{dx}, {dy}\n"
-        # ser.write(data.encode('utf-8'))
-        print(f"Sending dx: {dx}, dy: {dy}")
-
-    
-    # タイヤの動作を待つ
-    # time.sleep(1)
 
     cv2.imshow("Face Detection", frame)
 
