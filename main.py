@@ -2,8 +2,9 @@ import cv2
 import numpy as np
 import time 
 import os
+import RPi.GPIO as GPIO
 
-from src.motor_control import motor_run
+from src.motor_control import motor_run, motor_stop
 
 time.sleep(2)
 
@@ -14,9 +15,7 @@ face_cascade = cv2.CascadeClassifier(model_url)
 if face_cascade.empty():
     print("Error: Could not load Haar Cascade file.")
 
-url = "http://172.20.10.3:8080/video"
-
-cap = cv2.VideoCapture(url)
+cap = cv2.VideoCapture(0)
 
 ret, frame = cap.read()
 frame = cv2.resize(frame, (640, 480))
@@ -59,15 +58,15 @@ while True:
 
     current_time = time.time()
 
-    if current_time - last_detection_time > detection_interval:
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-        # 顔検出
-        last_faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(100, 100))
-        last_detection_time = current_time 
-
     # 追跡対象がなければ、カメラ画面の中心から最も遠い顔を選択する
     if not tracking:
+        if current_time - last_detection_time > detection_interval:
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+            # 顔検出
+            last_faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(100, 100))
+            last_detection_time = current_time 
+
         max_distance = 0
         selected_face = None
 
@@ -98,12 +97,13 @@ while True:
             dx = face_center[0] - cap_center_x
             dy = face_center[1] - cap_center_y
             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-            cv2.putText(frame, "face setting...", (50,250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
-            cv2.putText(frame, f"({dx}, {dy})", (100, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+            # cv2.putText(frame, "face setting...", (50,250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+            # cv2.putText(frame, f"({dx}, {dy})", (100, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
 
             # カメラの中心に顔が来たら終了
             if (abs(dx) < 100 and abs(dy) < 100):
                 print("追跡を終了します。")
+                motor_stop()
                 tracking = False
                 tracker = cv2.TrackerKCF_create()
             else: #　タイヤのモーター制御
@@ -118,6 +118,7 @@ while True:
     cv2.imshow("Face Detection", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
+        GPIO.cleanup()
         break
 
 cap.release()
