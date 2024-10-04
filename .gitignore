@@ -154,7 +154,6 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-
 src/*.wav
 src/*.m4a
 voicevox/
