@@ -1,9 +1,12 @@
+from openai import OpenAI
 import cv2
 import numpy as np
-import time 
 import os
 import RPi.GPIO as GPIO
+import sys
+import time
 
+from src import conversation, audio_record
 from src.motor_control import forward, backward, rotate, motor_stop
 
 time.sleep(10)
@@ -120,6 +123,20 @@ while True:
                 tracker = cv2.TrackerKCF_create()
             
             # 会話の処理
+            if approach:
+              # ロボットに話しかけた声を録音する
+              talkfile_path = audio_record.audio_record()
+              print(talkfile_path)
+
+              # 応答を作成する
+              talk_text = conversation.audio_convert_text(talkfile_path)
+              print(talk_text)
+              res_text = conversation.create_conversation_text(talk_text)
+              print(res_text)
+
+              # 応答を音声に変換する
+              conversation.jtalk_mei(res_text)
+              time.sleep(15)
         
         else:
             print("対象を見失いました")
