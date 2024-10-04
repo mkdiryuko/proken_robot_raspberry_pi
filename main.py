@@ -4,9 +4,9 @@ import time
 import os
 import RPi.GPIO as GPIO
 
-from src.motor_control import motor_run, motor_stop
+from src.motor_control import forward, backward, rotate, motor_stop
 
-time.sleep(2)
+time.sleep(10)
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 model_url = os.path.join(current_dir, "assets/haarcascade_frontalface_default.xml") # OpenCVが提供する顔検出モデル
@@ -22,6 +22,9 @@ frame = cv2.resize(frame, (640, 480))
 
 # 追跡対象の設定
 tracking = False
+
+# 接近完了フラグ
+approach = False
 
 # カメラ画面の中心                                                          
 height, width = frame.shape[:2]
@@ -97,18 +100,26 @@ while True:
             dx = face_center[0] - cap_center_x
             dy = face_center[1] - cap_center_y
             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-            # cv2.putText(frame, "face setting...", (50,250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
             # cv2.putText(frame, f"({dx}, {dy})", (100, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
 
             # カメラの中心に顔が来たら終了
-            if (abs(dx) < 100 and abs(dy) < 100):
+            if (abs(dx) > 100 and abs(dy) > 100):
+                print("ターゲットを中心に設定します")
+                rotate(dx, dy)
+            elif (h < 350):
+                print("ターゲットに近づきます")
+                forward()
+            elif (h > 500):
+                print("ターゲットから遠ざかります")
+                backward()
+            else: #　タイヤのモーター制御
                 print("追跡を終了します。")
                 motor_stop()
                 tracking = False
+                approach = True
                 tracker = cv2.TrackerKCF_create()
-            else: #　タイヤのモーター制御
-                print("追跡中...")
-                motor_run(dx, dy, speed=50)
+            
+            # 会話の処理
         
         else:
             print("対象を見失いました")

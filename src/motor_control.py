@@ -25,26 +25,43 @@ pwmB = GPIO.PWM(ENB, 100)
 pwmA.start(0)
 pwmB.start(0)
 
-def motor_left_foward(speed):
+# 前進
+def forward(speed):
     GPIO.output(IN1, GPIO.HIGH)
     GPIO.output(IN2, GPIO.LOW)
     pwmA.ChangeDutyCycle(speed)
-
-def motor_right_foward(speed):
     GPIO.output(IN3, GPIO.HIGH)
     GPIO.output(IN4, GPIO.LOW)
     pwmB.ChangeDutyCycle(speed)
 
-def motor_left_backward(speed):
+# 後進
+def backward(speed):
     GPIO.output(IN1, GPIO.LOW)
     GPIO.output(IN2, GPIO.HIGH)
     pwmA.ChangeDutyCycle(speed)
-
-def motor_right_backward(speed):
     GPIO.output(IN3, GPIO.LOW)
     GPIO.output(IN4, GPIO.HIGH)
     pwmB.ChangeDutyCycle(speed) 
 
+# 右回転
+def rotate_right(speed):
+    GPIO.output(IN1, GPIO.HIGH)
+    GPIO.output(IN2, GPIO.LOW)
+    pwmA.ChangeDutyCycle(speed)
+    GPIO.output(IN3, GPIO.LOW)
+    GPIO.output(IN4, GPIO.HIGH)
+    pwmB.ChangeDutyCycle(speed)
+
+# 左回転
+def rotate_left(speed):
+    GPIO.output(IN1, GPIO.LOW)
+    GPIO.output(IN2, GPIO.HIGH)
+    pwmA.ChangeDutyCycle(speed)
+    GPIO.output(IN3, GPIO.HIGH)
+    GPIO.output(IN4, GPIO.LOW)
+    pwmB.ChangeDutyCycle(speed)
+
+# 停止
 def motor_stop():
     GPIO.output(IN1, GPIO.LOW)
     GPIO.output(IN2, GPIO.LOW)
@@ -53,27 +70,23 @@ def motor_stop():
     pwmA.ChangeDutyCycle(0)  
     pwmB.ChangeDutyCycle(0)
 
-def motor_run(dx, dy, speed=50):
+def rotate(dx, dy, speed=50):
     try:
         if dx > 0 and dy > 0:
             print("顔が右下")
-            motor_left_foward(speed)
-            # motor_right_backward(speed)
+            rotate_right()
             
         elif dx > 0 and dy < 0:
             print("顔が右上")
-            motor_left_foward(speed)
-            # motor_right_backward(speed)
+            rotate_right()
 
         elif dx < 0 and dy > 0:
             print("顔が左下")
-            motor_left_backward(speed)
-            # motor_right_foward(speed)
+            rotate_left()
 
         elif dx < 0 and dy < 0:
             print("顔が左上")
-            motor_left_backward(speed)
-            # motor_right_foward(speed)
+            rotate_left()
 
         else:
             print("追跡を終了する")
@@ -81,4 +94,3 @@ def motor_run(dx, dy, speed=50):
     
     except KeyboardInterrupt:
         pass
-        
