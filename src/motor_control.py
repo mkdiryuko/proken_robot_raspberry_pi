@@ -26,7 +26,7 @@ pwmA.start(0)
 pwmB.start(0)
 
 # 前進
-def forward(speed):
+def forward(speed=50):
     GPIO.output(IN1, GPIO.HIGH)
     GPIO.output(IN2, GPIO.LOW)
     pwmA.ChangeDutyCycle(speed)
@@ -35,7 +35,7 @@ def forward(speed):
     pwmB.ChangeDutyCycle(speed)
 
 # 後進
-def backward(speed):
+def backward(speed=50):
     GPIO.output(IN1, GPIO.LOW)
     GPIO.output(IN2, GPIO.HIGH)
     pwmA.ChangeDutyCycle(speed)
@@ -44,7 +44,7 @@ def backward(speed):
     pwmB.ChangeDutyCycle(speed) 
 
 # 右回転
-def rotate_right(speed):
+def rotate_right(speed=30):
     GPIO.output(IN1, GPIO.HIGH)
     GPIO.output(IN2, GPIO.LOW)
     pwmA.ChangeDutyCycle(speed)
@@ -53,7 +53,7 @@ def rotate_right(speed):
     pwmB.ChangeDutyCycle(speed)
 
 # 左回転
-def rotate_left(speed):
+def rotate_left(speed=30):
     GPIO.output(IN1, GPIO.LOW)
     GPIO.output(IN2, GPIO.HIGH)
     pwmA.ChangeDutyCycle(speed)
@@ -70,7 +70,7 @@ def motor_stop():
     pwmA.ChangeDutyCycle(0)  
     pwmB.ChangeDutyCycle(0)
 
-def rotate(dx, dy, speed=50):
+def rotate(dx, dy):
     try:
         if dx > 0 and dy > 0:
             print("顔が右下")

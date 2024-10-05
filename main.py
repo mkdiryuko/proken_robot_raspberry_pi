@@ -9,7 +9,7 @@ import time
 from src import conversation, audio_record
 from src.motor_control import forward, backward, rotate, motor_stop
 
-time.sleep(10)
+time.sleep(2)
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 model_url = os.path.join(current_dir, "assets/haarcascade_frontalface_default.xml") # OpenCVが提供する顔検出モデル
@@ -19,15 +19,18 @@ if face_cascade.empty():
     print("Error: Could not load Haar Cascade file.")
 
 cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FPS, 30)
 
 ret, frame = cap.read()
-frame = cv2.resize(frame, (640, 480))
+# frame = cv2.resize(frame)
 
 # 追跡対象の設定
 tracking = False
 
 # 接近完了フラグ
-approach = False
+approach = 0
+
+pre_x = []
 
 # カメラ画面の中心                                                          
 height, width = frame.shape[:2]
@@ -56,7 +59,7 @@ def face_distance(face_center_x, face_center_y, center_x, center_y):
 
 while True:
     ret, frame = cap.read()
-    frame = cv2.resize(frame, (640, 480))
+    # frame = cv2.resize(frame, (640, 480))
 
     if not ret or frame is None:
         print('not read camera')
@@ -100,43 +103,56 @@ while True:
         if success:
             x, y, w, h = [int(v) for v in bbox]
             face_center = detect_face_center(x, w, y, h)
+            print(x)
             dx = face_center[0] - cap_center_x
             dy = face_center[1] - cap_center_y
             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-            # cv2.putText(frame, f"({dx}, {dy})", (100, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
 
             # カメラの中心に顔が来たら終了
-            if (abs(dx) > 100 and abs(dy) > 100):
+            if (abs(dx) > 30):
                 print("ターゲットを中心に設定します")
-                rotate(dx, dy)
-            elif (h < 350):
-                print("ターゲットに近づきます")
-                forward()
-            elif (h > 500):
-                print("ターゲットから遠ざかります")
-                backward()
+                # rotate(dx, dy)
+            # elif (h < 100):
+            #     print("ターゲットに近づきます")
+            #     forward()
+            # elif (h > 150):
+            #     print("ターゲットから遠ざかります")
+            #     backward()
             else: #　タイヤのモーター制御
                 print("追跡を終了します。")
                 motor_stop()
                 tracking = False
-                approach = True
+                approach += 1
                 tracker = cv2.TrackerKCF_create()
-            
+                print("トラッカーの再設定")
+
+            # トラッカーのフリーズ対策
+            pre_x.append(x)
+            if len(pre_x) == 20:
+                ave_x = sum(pre_x) / 20
+                if abs(ave_x - x) <= 10:
+                    print("フリーズの可能性あり!!")
+                    tracking = False
+                    tracker = cv2.TrackerKCF_create()
+                pre_x = []
+            print(pre_x)
+
             # 会話の処理
-            if approach:
+            if approach == 50:
+              # 会話可能なことを伝える
+              conversation_ok = conversation.jtalk_mei("こんにちは、話しかけてください")
               # ロボットに話しかけた声を録音する
               talkfile_path = audio_record.audio_record()
-              print(talkfile_path)
 
-              # 応答を作成する
+              # 録音した音声をテキスト化
               talk_text = conversation.audio_convert_text(talkfile_path)
-              print(talk_text)
-              res_text = conversation.create_conversation_text(talk_text)
-              print(res_text)
+              # 応答を作成する間、考え中...とつぶやく
 
+              # 応答の作成
+              res_text = conversation.create_conversation_text(talk_text)
               # 応答を音声に変換する
-              conversation.jtalk_mei(res_text)
-              time.sleep(15)
+              conversation.jtalk_mei(f"こんにちは,{res_text}")
+              approach = 0
         
         else:
             print("対象を見失いました")

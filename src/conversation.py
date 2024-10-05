@@ -47,16 +47,20 @@ def audio_convert_text(audio_path):
     return transcription.text
 
 def create_conversation_text(text):
-    prompt = "以下の条件のもとで、会話をしてください。\n条件1:日本語で回答する\n条件2:100文字以内で回答する\n条件3:1人称はボク\n条件4:語尾に「です」「ます」を使わないでください\n条件5:フレンドリーに"
-    response = client.chat.completions.create(
-        model = "gpt-4-turbo",
-        messages = [
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": text}
-        ],
-        temperature = 0
-    )
-    res_text = response.choices[0].message.content
+    prompt = "以下の条件のもとで、会話をしてください。\n条件1:日本語で回答する\n条件2:あなたの名前は[プロケンロボット]\n条件3:1人称はボク\n条件4:語尾に「です」「ます」を使わないでください\n条件5:フレンドリーに\n条件6:一文で完結してください"
+    try:
+        response = client.chat.completions.create(
+            model = "gpt-4-turbo",
+            messages = [
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": text}
+            ],
+            temperature = 0,
+            max_tokens = 100,
+            timeout = 30
+        )
+        res_text = response.choices[0].message.content
+    except:
+        res_text = "ごめんね、もう一度質問してくれないかな"
     print(res_text)
-
     return res_text

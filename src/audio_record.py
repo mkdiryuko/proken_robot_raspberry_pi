@@ -8,7 +8,7 @@ def audio_record():
     CHANNELS = 1  # モノラル
     RATE = 44100  # サンプリングレート（44.1kHz）
     CHUNK = 1024  # フレームサイズ
-    RECORD_SECONDS = 10  # 録音する時間（秒）
+    RECORD_SECONDS = 5  # 録音する時間（秒）
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     OUTPUT_FILEPATH = os.path.join(current_dir,"..","audio","talk.wav") # talk.wavをauidoディレクトリに保存
