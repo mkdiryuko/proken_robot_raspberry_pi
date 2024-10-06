@@ -1,12 +1,19 @@
-import openai
+import asyncio
+import aiohttp
 import os
+from openai import AsyncOpenAI
+from audio_record import *
+from conversation import *
 
-import conversation2
+def main():
+    # 1.録音
+    audio_data = audio_record()
+    # イベントループの作成
+    loop = asyncio.get_event_loop()
+    # 2.WhisperとChatGPTのAPIに投げている間、考え中と喋らせる
+    gpt_response = loop.run_until_complete(thinking_task(audio_data))
+    # 3.ChatGPTによって作成された回答を喋らせる
+    jtalk_mei(gpt_response)
 
-audio_url = "http://172.20.10.3:8080/audio.wav"
-
-# OPENAIのAPI_KEYを設定
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-conversation2.get_audio_stream(audio_url)
-conversation2.audio_convert_text(audio_url)
+if __name__ == "__main__":
+    main()

@@ -5,8 +5,10 @@ import os
 import RPi.GPIO as GPIO
 import sys
 import time
+import asyncio
 
-from src import conversation, audio_record
+from src.audio_record import audio_record
+from src.conversation import jtalk_mei, thinking_task
 from src.motor_control import forward, backward, rotate, motor_stop
 
 time.sleep(2)
@@ -111,7 +113,7 @@ while True:
             # カメラの中心に顔が来たら終了
             if (abs(dx) > 30):
                 print("ターゲットを中心に設定します")
-                # rotate(dx, dy)
+                rotate(dx, dy)
             # elif (h < 100):
             #     print("ターゲットに近づきます")
             #     forward()
@@ -140,18 +142,15 @@ while True:
             # 会話の処理
             if approach == 50:
               # 会話可能なことを伝える
-              conversation_ok = conversation.jtalk_mei("こんにちは、話しかけてください")
-              # ロボットに話しかけた声を録音する
-              talkfile_path = audio_record.audio_record()
-
-              # 録音した音声をテキスト化
-              talk_text = conversation.audio_convert_text(talkfile_path)
-              # 応答を作成する間、考え中...とつぶやく
-
-              # 応答の作成
-              res_text = conversation.create_conversation_text(talk_text)
-              # 応答を音声に変換する
-              conversation.jtalk_mei(f"こんにちは,{res_text}")
+              conversation_ok = jtalk_mei("こんにちは、話しかけてください")
+              # 1.録音
+              audio_data = audio_record()
+              # イベントループの作成
+              loop = asyncio.get_event_loop()
+              # 2.WhisperとChatGPTのAPIに投げている間、考え中と喋らせる
+              gpt_response = loop.run_until_complete(thinking_task(audio_data))
+              # 3.ChatGPTによって作成された回答を喋らせる
+              jtalk_mei(f"こんにちは,{gpt_response}")
               approach = 0
         
         else:
