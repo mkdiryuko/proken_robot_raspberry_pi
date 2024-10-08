@@ -12,6 +12,7 @@ asyncio_client = AsyncOpenAI()
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 JTALK_FILEPATH = os.path.join(current_dir,"..","audio","jtalk_mei.wav")
+PROMPT_FILEPATH = os.path.join(current_dir, "prompt.txt")
 
 # 音声合成ソフトjtalk
 def jtalk_mei(t):
@@ -25,7 +26,7 @@ def jtalk_mei(t):
     c.stdin.write(t.encode())
     c.stdin.close()
     c.wait()
-    aplay = ['aplay','-q',JTALK_FILEPATH]
+    aplay = ['aplay','-D','plughw:4,0',JTALK_FILEPATH]
     wr = subprocess.run(aplay)
 
 def audio_convert_text(audio_path):
@@ -61,7 +62,7 @@ def create_conversation_text(text):
             ],
             temperature = 0,
             max_tokens = 100,
-            timeout = 30
+            timeout = 10
         )
         res_text = response.choices[0].message.content
     except:
@@ -88,7 +89,7 @@ async def async_jtalk_mei(t):
     await process.wait()  # 処理が終了するまで待機
 
     # 非同期で aplay を実行
-    aplay = ['aplay', '-q', JTALK_FILEPATH]
+    aplay = ['aplay', '-D','plughw:4,0', JTALK_FILEPATH]
     await asyncio.create_subprocess_exec(*aplay)
 
 # Whisper API 非同期処理関数
@@ -125,7 +126,8 @@ async def transcribe_audio(audiofile_path):
 # ChatGPT API 非同期処理関数
 async def chatgpt_query(text):
     print("ChatGPTにテキストを送信中...")
-    prompt = "以下の条件のもとで、会話をしてください。\n条件1:日本語で回答する\n条件2:あなたの名前は[プロケンロボット]\n条件3:1人称はボク\n条件4:語尾に「です」「ます」を使わないでください\n条件5:フレンドリーに\n条件6:一文で完結してください"
+    with open(PROMPT_FILEPATH, "r", encoding="utf-8") as prompt:
+        prompt = prompt.read()
     try:
         async with aiohttp.ClientSession() as session:
             response = await asyncio_client.chat.completions.create(
@@ -138,6 +140,7 @@ async def chatgpt_query(text):
                 timeout = 30
             )
         res_text = response.choices[0].message.content
+        print(res_text)
     except:
         res_text = "もう一度質問してくれるかな？"
     return res_text
