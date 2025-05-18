@@ -111,7 +111,7 @@ while True:
             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
             # カメラの中心に顔が来たら終了
-            if (abs(dx) > 30):
+            if (abs(dx) > 50):
                 print("ターゲットを中心に設定します")
                 rotate(dx, dy)
             # elif (h < 100):
@@ -130,8 +130,8 @@ while True:
 
             # トラッカーのフリーズ対策
             pre_x.append(x)
-            if len(pre_x) == 20:
-                ave_x = sum(pre_x) / 20
+            if len(pre_x) == 10:
+                ave_x = sum(pre_x) / 10
                 if abs(ave_x - x) <= 10:
                     print("フリーズの可能性あり!!")
                     tracking = False
@@ -150,7 +150,7 @@ while True:
               # 2.WhisperとChatGPTのAPIに投げている間、考え中と喋らせる
               gpt_response = loop.run_until_complete(thinking_task(audio_data))
               # 3.ChatGPTによって作成された回答を喋らせる
-              jtalk_mei(f"こんにちは,{gpt_response}")
+              jtalk_mei(f"{gpt_response}")
               approach = 0
         
         else:

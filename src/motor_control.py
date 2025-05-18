@@ -11,6 +11,8 @@ IN3 = 22
 IN4 = 23
 ENB = 13
 
+SPEED = 30
+
 # PWM設定
 GPIO.setmode(GPIO.BCM) # GPIOの番号を指定するモード
 GPIO.setup(IN1, GPIO.OUT)
@@ -26,7 +28,7 @@ pwmA.start(0)
 pwmB.start(0)
 
 # 前進
-def forward(speed=50):
+def forward(speed=SPEED):
     GPIO.output(IN1, GPIO.HIGH)
     GPIO.output(IN2, GPIO.LOW)
     pwmA.ChangeDutyCycle(speed)
@@ -35,7 +37,7 @@ def forward(speed=50):
     pwmB.ChangeDutyCycle(speed)
 
 # 後進
-def backward(speed=50):
+def backward(speed=SPEED):
     GPIO.output(IN1, GPIO.LOW)
     GPIO.output(IN2, GPIO.HIGH)
     pwmA.ChangeDutyCycle(speed)
@@ -44,7 +46,7 @@ def backward(speed=50):
     pwmB.ChangeDutyCycle(speed) 
 
 # 右回転
-def rotate_right(speed=30):
+def rotate_right(speed=SPEED):
     GPIO.output(IN1, GPIO.HIGH)
     GPIO.output(IN2, GPIO.LOW)
     pwmA.ChangeDutyCycle(speed)
@@ -53,7 +55,7 @@ def rotate_right(speed=30):
     pwmB.ChangeDutyCycle(speed)
 
 # 左回転
-def rotate_left(speed=30):
+def rotate_left(speed=SPEED):
     GPIO.output(IN1, GPIO.LOW)
     GPIO.output(IN2, GPIO.HIGH)
     pwmA.ChangeDutyCycle(speed)
